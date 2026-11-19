@@ -1,6 +1,8 @@
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from booking_create import BookingRequest, create_booking
 
@@ -49,3 +51,9 @@ async def post_booking(
         "message": "Booking created.",
         "data": new_booking,
     }
+
+
+@app.get("/api/v1/greeting", response_class=HTMLResponse)
+def greeting():
+    page = Path(__file__).with_name("greeting.html")
+    return page.read_text(encoding="utf-8")
