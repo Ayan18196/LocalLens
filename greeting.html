@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>LocalLens API</title>
+    <style>
+        body {
+            margin: 0;
+            background: #f4f7f5;
+            color: #20332b;
+            font-family: Inter, system-ui, sans-serif;
+            line-height: 1.6;
+        }
+
+        main {
+            max-width: 680px;
+            margin: 0 auto;
+            padding: 32px 20px;
+        }
+
+        section {
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        section h2 {
+            margin-top: 0;
+        }
+
+        code {
+            color: #155744;
+            overflow-wrap: anywhere;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>LocalLens API</h1>
+        <p>LocalLens helps travelers find and book local experiences.</p>
+        <p><strong>Status:</strong> API is running. <strong>Version:</strong> v1</p>
+
+        <section>
+            <h2>Team Members</h2>
+            <ul>
+                <li>Ayan Isgandarova ([18196]) — API setup, mock data, booking creation, and this page.</li>
+                <li>Fatima Baghirli ([23045]) — Listing, viewing, and updating bookings.</li>
+                <li>Nabati Hidayatov ([23926]) — Token checks, user permissions, and deleting bookings.</li>
+            </ul>
+        </section>
+
+        <section>
+            <h2>API Endpoints</h2>
+            <ul>
+                <li><code>GET /api/v1/bookings</code> — List bookings.</li>
+                <li><code>GET /api/v1/bookings/{id}</code> — View one booking.</li>
+                <li><code>POST /api/v1/bookings</code> — Create a booking.</li>
+                <li><code>PUT /api/v1/bookings/{id}</code> — Update a booking.</li>
+                <li><code>DELETE /api/v1/bookings/{id}</code> — Delete a booking.</li>
+                <li><code>GET /api/v1/greeting</code> — Open this page.</li>
+            </ul>
+        </section>
+    </main>
+</body>
+</html>
