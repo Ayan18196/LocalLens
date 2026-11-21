@@ -73,20 +73,31 @@ The bookings are stored in memory. When the server restarts, it reloads the orig
 
 - [API documentation and example requests](API.md)
 - [LocalLens API Postman collection](postman/collections/LocalLens%20API/)
-- YouTube demo: [add the video link, up to 5 minutes]
+- YouTube demo: https://www.youtube.com/watch?v=AX46yOZjQWc
 
 ## Team contributions
 
 | Team member | Work |
 | --- | --- |
 | Ayan Isgandarova | Set up FastAPI and the mock booking data, built the create-booking endpoint and its validation, and made the HTML greeting page. |
-| Fatima Baghirli | Booking list, booking details, booking updates, pagination, and README instructions. |
+| Fatima Baghirli | Booking list, booking details, booking updates, pagination, the JSON error format, tests, README instructions, API documentation for her endpoints, and the demo video. |
 | Nabati Hidayatov | Mock Bearer tokens, booking access checks, and the delete-booking endpoint. |
 
 ## Git contributions
 
-Run `git shortlog -sn --all` from the project folder before submitting and paste the actual output below.
+Output of `git shortlog -sn --all`:
 
 ```text
-[Paste git shortlog -sn --all output here]
+    20	Ayan18196
+    15	Fatima Baghirli
+     3	Nabati Hidayatov
+     1	Nabati-Hidayatov
+     1	fatimamb-blip
 ```
+
+Some people appear twice because their Git name was set differently on some commits:
+
+- `Fatima Baghirli` and `fatimamb-blip` are both Fatima Baghirli.
+- `Nabati Hidayatov` and `Nabati-Hidayatov` are both Nabati Hidayatov.
+
+See [CONTRIBUTORS.md](CONTRIBUTORS.md) for each member's student ID and responsibilities.
