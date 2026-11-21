@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
-from auth import get_current_user
+from auth import get_current_user, require_booking_access
 from mock_data import bookings
 
 router = APIRouter()
@@ -17,6 +17,20 @@ def paginate(items: list, page: int, per_page: int) -> list:
     return items[start:start + per_page]
 
 
+def find_booking(booking_id: int) -> dict:
+    for booking in bookings:
+        if booking["id"] == booking_id:
+            return booking
+
+    raise HTTPException(
+        status_code=404,
+        detail={
+            "code": "BOOKING_NOT_FOUND",
+            "message": "Booking not found.",
+        },
+    )
+
+
 @router.get("/api/v1/bookings")
 def list_bookings(
     page: int = Query(1, gt=0),
@@ -30,4 +44,19 @@ def list_bookings(
         "message": "Bookings retrieved.",
         "data": paginate(items, page, perPage),
         "meta": {"total": len(items), "page": page, "perPage": perPage},
+    }
+
+
+@router.get("/api/v1/bookings/{id}")
+def get_booking(
+    id: int = Path(gt=0),
+    user: dict = Depends(get_current_user),
+):
+    booking = find_booking(id)
+    require_booking_access(booking, user)
+
+    return {
+        "success": True,
+        "message": "Booking retrieved.",
+        "data": booking,
     }
