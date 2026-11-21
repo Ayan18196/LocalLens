@@ -36,7 +36,7 @@ The bookings are stored in memory. When the server restarts, it reloads the orig
 ## API examples and demo
 
 - [API documentation and example requests](API.md)
-- Postman collection: [add the exported collection filename or link]
+- [Postman collection](postman/collections/LocalLens%20API/)
 - YouTube demo: [add the video link, up to 5 minutes]
 
 ## Team contributions
