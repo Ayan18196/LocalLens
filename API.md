@@ -19,7 +19,7 @@ Content-Type: application/json
 | User B | `user-b-token` | Own bookings |
 | Admin | `admin-token` | All bookings |
 
-Missing or invalid tokens should return `401 Unauthorized`. The examples below use `403 Forbidden` for access to someone else's booking because the caller is signed in but lacks permission. If we use `404 Not Found` instead, update the examples and document the reason after testing.
+A missing or invalid token returns `401 Unauthorized`. A regular user who tries to read, update or delete another user's booking gets `403 Forbidden`, because the caller is signed in but lacks permission. The admin can read, update and delete any booking.
 
 ## Endpoint summary
 
@@ -28,11 +28,11 @@ Missing or invalid tokens should return `401 Unauthorized`. The examples below u
 | `GET /api/v1/bookings` | Signed-in user or admin | Query: `page`, `perPage` | `200` | `400`, `401` |
 | `GET /api/v1/bookings/{id}` | Booking owner or admin | Path: `id` | `200` | `400`, `401`, `403`, `404` |
 | `POST /api/v1/bookings` | Signed-in user or admin | JSON body: `slotId` | `201` | `400`, `401` |
-| `PUT /api/v1/bookings/{id}` | Booking owner or admin | Path: `id`. JSON body: `slotId` in the draft example | `200` | `400`, `401`, `403`, `404` |
-| `DELETE /api/v1/bookings/{id}` | Booking owner or admin | Path: `id` | `200` in the draft example | `400`, `401`, `403`, `404` |
+| `PUT /api/v1/bookings/{id}` | Booking owner or admin | Path: `id`. JSON body: `slotId` | `200` | `400`, `401`, `403`, `404` |
+| `DELETE /api/v1/bookings/{id}` | Booking owner or admin | Path: `id` | `200` | `400`, `401`, `403`, `404` |
 | `GET /api/v1/greeting` | Public | No parameters | `200` with HTML | `405` for unsupported methods |
 
-Unsupported methods can also return `405` on booking paths. Document `409` if the team adds a booking conflict rule. Paths below use numeric booking IDs. Requests only use the inputs listed in the table.
+Unsupported methods return `405` on booking paths too. Paths below use numeric booking IDs. Requests only use the inputs listed in the table.
 
 ## List bookings
 
@@ -190,7 +190,9 @@ Example: `PUT /api/v1/bookings/103` with `user-a-token` returns **403 Forbidden*
 
 **DELETE `/api/v1/bookings/{id}`**
 
-The path parameter `id` identifies the booking to delete. The draft response uses `200` and `data: null`. Confirm the status and response with the delete implementation.
+The path parameter `id` is a positive integer that identifies the booking to delete. The owner of the booking or the admin can delete it. The response is `200` with `data: null`.
+
+**Errors:** `400 VALIDATION_ERROR` if `id` is not a positive integer, `401 UNAUTHORIZED` for a missing or invalid token, `403 BOOKING_FORBIDDEN` if a regular user deletes another user's booking, and `404 BOOKING_NOT_FOUND` if no booking has this ID.
 
 ```http
 DELETE /api/v1/bookings/102
@@ -227,7 +229,7 @@ The response body is the LocalLens HTML page.
 
 ## Access and error examples
 
-Use these requests to check the final access rules. Keep the error code and message consistent with the code after integration.
+Use these requests to check the access rules.
 
 | Request | Expected result |
 | --- | --- |
