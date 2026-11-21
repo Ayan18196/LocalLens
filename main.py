@@ -5,7 +5,9 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.exceptions import HTTPException
 from auth import get_booking_owner
 from booking_create import BookingRequest, create_booking
+from booking_delete import router as booking_delete_router
 app = FastAPI(title="LocalLens API")
+app.include_router(booking_delete_router)
 @app.exception_handler(HTTPException)
 async def handle_http_error(_request, error: HTTPException):
     detail = error.detail
