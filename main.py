@@ -4,9 +4,19 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse
 
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
 from booking_create import BookingRequest, create_booking
 
 app = FastAPI(title="LocalLens API")
+
+ERROR_CODES = {
+    401: "UNAUTHORIZED",
+    403: "FORBIDDEN",
+    404: "NOT_FOUND",
+    405: "METHOD_NOT_ALLOWED",
+    409: "CONFLICT",
+}
 
 
 def get_booking_owner() -> str:
@@ -37,6 +47,22 @@ async def handle_validation_error(_request, error: RequestValidationError):
     }
 
     return JSONResponse(status_code=400, content=response)
+
+@app.exception_handler(StarletteHTTPException)
+async def handle_http_error(_request, error: StarletteHTTPException):
+    response = {
+        "success": False,
+        "error": {
+            "code": ERROR_CODES.get(error.status_code, "ERROR"),
+            "message": str(error.detail),
+        },
+    }
+
+    return JSONResponse(
+        status_code=error.status_code,
+        content=response,
+        headers=getattr(error, "headers", None),
+    )
 
 
 @app.post("/api/v1/bookings", status_code=201)
