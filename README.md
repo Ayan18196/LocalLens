@@ -27,6 +27,42 @@ Keep the server running while you open these pages:
 - [API greeting page](http://127.0.0.1:8000/api/v1/greeting)
 - [Interactive API documentation](http://127.0.0.1:8000/docs)
 
+## Authentication
+
+There is no real login. Every booking request must send one of three mock tokens in the `Authorization` header:
+
+```http
+Authorization: Bearer user-a-token
+```
+
+| Account | Token | Access |
+| --- | --- | --- |
+| User A | `user-a-token` | Only User A's bookings |
+| User B | `user-b-token` | Only User B's bookings |
+| Admin | `admin-token` | All bookings |
+
+A missing or wrong token returns `401 Unauthorized`. A regular user who tries to view or change another user's booking gets `403 Forbidden`.
+
+To use a token in the interactive documentation at `/docs`, click **Authorize** and paste only the token, for example `user-a-token`.
+
+## Running the tests
+
+With the virtual environment set up as above, run:
+
+**Windows (PowerShell)**
+
+```powershell
+.\.venv\Scripts\python.exe -m pytest -v
+```
+
+**macOS or Linux**
+
+```bash
+.venv/bin/python -m pytest -v
+```
+
+The tests in `test_bookings.py` cover listing with pagination, viewing and updating bookings, validation errors, missing and invalid tokens, access to another user's booking, and admin access. Each test starts from the original mock data.
+
 ## Mock data
 
 The app starts with four bookings in `mock_data.py`. Bookings `101` and `102` belong to User A. Bookings `103` and `104` belong to User B. Use ID `999` to test a booking that does not exist on a fresh run.

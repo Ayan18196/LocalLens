@@ -40,7 +40,16 @@ Unsupported methods can also return `405` on booking paths. Document `409` if th
 
 **GET `/api/v1/bookings`**
 
-A regular user sees their own bookings. The admin can list bookings for both users. In this draft, `page` and `perPage` are positive integers. The response includes the total number of bookings visible to the caller and the requested page information.
+A regular user sees only their own bookings. The admin sees the bookings of all users.
+
+| Query parameter | Type | Default | Rules |
+| --- | --- | --- | --- |
+| `page` | integer | `1` | At least `1` |
+| `perPage` | integer | `10` | From `1` to `50` |
+
+The response includes `meta` with `total` (the number of bookings the caller can see, across all pages), `page` and `perPage`. A page past the end returns `200` with an empty `data` list.
+
+**Errors:** `400 VALIDATION_ERROR` for an invalid `page` or `perPage` (for example `page=0`, `page=abc` or `perPage=51`), and `401 UNAUTHORIZED` for a missing or invalid token.
 
 ```http
 GET /api/v1/bookings?page=1&perPage=1
@@ -64,7 +73,13 @@ Authorization: Bearer user-a-token
 
 **GET `/api/v1/bookings/{id}`**
 
-The path parameter `id` identifies a booking. For example, User A can view booking `101`. Use `999` to test the `404` case on a fresh run.
+The path parameter `id` is a positive integer that identifies a booking. User A can view booking `101`. The admin can view any booking. Use `999` to test the `404` case on a fresh run.
+
+The API first checks that the booking exists and then checks access, so a missing booking always returns `404`.
+
+**Errors:** `400 VALIDATION_ERROR` if `id` is not a positive integer (for example `abc` or `0`), `401 UNAUTHORIZED` for a missing or invalid token, `403 BOOKING_FORBIDDEN` if a regular user asks for another user's booking, and `404 BOOKING_NOT_FOUND` if no booking has this ID.
+
+We return `403` rather than `404` for another user's booking because the caller is signed in and the booking exists, but they lack permission. This makes the reason for the failure clear while testing the prototype. Booking IDs are simple sequential numbers in the mock data and reveal nothing private.
 
 ```http
 GET /api/v1/bookings/101
@@ -124,7 +139,7 @@ With a valid token, sending `{"slotId": "205"}` returns **400 Bad Request** beca
 
 **PUT `/api/v1/bookings/{id}`**
 
-This draft example changes the booked time slot. It uses a positive integer booking ID in the path and a positive integer `slotId` in the body. Confirm the final editable fields with the update implementation.
+Moves a booking to another time slot. The path parameter `id` is a positive integer. The body must contain exactly one field, `slotId`, which is a positive JSON integer. The API never changes `id`, `ownerId` or `status` through this endpoint, so a body with any other field is rejected. The owner of the booking or the admin can update it.
 
 ```http
 PUT /api/v1/bookings/101
@@ -141,6 +156,35 @@ Content-Type: application/json
   "success": true,
   "message": "Booking updated.",
   "data": {"id": 101, "slotId": 206, "ownerId": "user-a", "status": "confirmed"}
+}
+```
+
+**Errors:** `400 VALIDATION_ERROR` if `slotId` is missing, is not an integer (for example `"206"` or `2.5`), is zero or negative, or if the body has an extra field such as `ownerId`; `401 UNAUTHORIZED` for a missing or invalid token; `403 BOOKING_FORBIDDEN` if a regular user updates another user's booking; `404 BOOKING_NOT_FOUND` if no booking has this ID.
+
+Example: sending `{"slotId": 206, "ownerId": "user-b"}` returns **400 Bad Request**.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Check the submitted fields.",
+    "details": [
+      {"field": "ownerId", "message": "Extra inputs are not permitted"}
+    ]
+  }
+}
+```
+
+Example: `PUT /api/v1/bookings/103` with `user-a-token` returns **403 Forbidden**.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "BOOKING_FORBIDDEN",
+    "message": "You can access only your own bookings."
+  }
 }
 ```
 
@@ -190,9 +234,29 @@ Use these requests to check the final access rules. Keep the error code and mess
 | Request | Expected result |
 | --- | --- |
 | `GET /api/v1/bookings/101` with no token or with an invalid token | `401 Unauthorized` |
-| `GET /api/v1/bookings/103` with `user-a-token` | `403 Forbidden` in this draft |
+| `GET /api/v1/bookings/103` with `user-a-token` | `403 Forbidden` |
 | `GET /api/v1/bookings/103` with `admin-token` | `200 OK` |
 | `GET /api/v1/bookings/999` with a valid token on a fresh run | `404 Not Found` |
 | `PATCH /api/v1/bookings/101` with a valid token | `405 Method Not Allowed` |
 
-The final JSON error format contains `success: false` and an `error` object with a fixed `code` and a readable `message`. The `details` field is used for validation errors.
+Every error uses the same JSON format: `success: false` and an `error` object with a fixed `code` and a readable `message`. The `details` list appears only for validation errors.
+
+| Status | `error.code` |
+| --- | --- |
+| `400` | `VALIDATION_ERROR` |
+| `401` | `UNAUTHORIZED` |
+| `403` | `BOOKING_FORBIDDEN` |
+| `404` | `BOOKING_NOT_FOUND` |
+| `405` | `HTTP_405` |
+
+Example: a request with no token returns **401 Unauthorized**.
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "A valid bearer token is required."
+  }
+}
+```
