@@ -1,9 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
+from pydantic import BaseModel, ConfigDict, Field
 
 from auth import get_current_user, require_booking_access
 from mock_data import bookings
 
 router = APIRouter()
+
+
+class BookingUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    slotId: int = Field(strict=True, gt=0)
 
 
 def visible_bookings(user: dict) -> list:
@@ -58,5 +65,23 @@ def get_booking(
     return {
         "success": True,
         "message": "Booking retrieved.",
+        "data": booking,
+    }
+
+
+@router.put("/api/v1/bookings/{id}")
+def put_booking(
+    changes: BookingUpdate,
+    id: int = Path(gt=0),
+    user: dict = Depends(get_current_user),
+):
+    booking = find_booking(id)
+    require_booking_access(booking, user)
+
+    booking["slotId"] = changes.slotId
+
+    return {
+        "success": True,
+        "message": "Booking updated.",
         "data": booking,
     }
