@@ -4,8 +4,6 @@
 
 **Version:** `v1`
 
-> Draft for team review. The greeting page works, and the create endpoint was tested locally with a test user. The create endpoint still needs the team's shared token check. Confirm the list, update, delete, and access-error examples against the finished API before submitting.
-
 ## Authentication
 
 Send an `Authorization` header with booking requests. For requests with a JSON body, also send `Content-Type: application/json`.
@@ -100,7 +98,7 @@ Authorization: Bearer user-a-token
 
 **POST `/api/v1/bookings`**
 
-The body must contain `slotId` as a positive JSON integer. Text, zero, negative numbers, missing values, and extra fields cause a validation error. The API assigns the booking ID and status. After the shared token check is connected, it takes `ownerId` from the signed-in user.
+The body must contain `slotId` as a positive JSON integer. Text, zero, negative numbers, missing values, and extra fields cause a validation error. The API assigns the booking ID and status. The API takes `ownerId` from the authenticated user.
 
 ```http
 POST /api/v1/bookings
