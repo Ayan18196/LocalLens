@@ -1,5 +1,62 @@
-from fastapi import Depends, HTTPException
+import gzip
+from pathlib import Path
+from typing import Annotated, Literal
+
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pwdlib import PasswordHash
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+    Field,
+    SecretStr,
+    StringConstraints,
+    field_validator,
+)
+from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.orm import Session
+
+from database import get_db
+from models import User
+
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
+password_hash = PasswordHash.recommended()
+
+password_list = Path(__file__).with_name("data") / "django-common-passwords.txt.gz"
+with gzip.open(password_list, "rt", encoding="utf-8") as password_file:
+    COMMON_PASSWORDS = frozenset(line.strip() for line in password_file)
+
+
+class RegistrationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    name: Annotated[
+        str,
+        StringConstraints(
+            strip_whitespace=True, min_length=1, max_length=100, pattern=r"^[^\x00]+$"
+        ),
+    ]
+    email: EmailStr
+    password: SecretStr = Field(min_length=15, max_length=128)
+    role: Literal["customer", "host"]
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, email: str) -> str:
+        normalized_email = email.lower()
+        if len(normalized_email) > 255:
+            raise ValueError("Email must be at most 255 characters.")
+        return normalized_email
+
+    @field_validator("password")
+    @classmethod
+    def reject_common_password(cls, password: SecretStr) -> SecretStr:
+        if password.get_secret_value().strip().lower() in COMMON_PASSWORDS:
+            raise ValueError("Choose a password that is less commonly used.")
+        return password
+
+
 MOCK_USERS = {
     "user-a-token": {"id": "user-a", "role": "user"},
     "user-b-token": {"id": "user-b", "role": "user"},
@@ -38,3 +95,42 @@ def require_booking_access(booking: dict, user: dict) -> None:
                 "message": "You can access only your own bookings.",
             },
         )
+
+
+@router.post("/register", status_code=201)
+def register(request: RegistrationRequest, db: Annotated[Session, Depends(get_db)]):
+    approval_status = "pending" if request.role == "host" else "approved"
+    statement = (
+        insert(User)
+        .values(
+            name=request.name,
+            email=request.email,
+            password_hash=password_hash.hash(request.password.get_secret_value()),
+            role=request.role,
+            approval_status=approval_status,
+        )
+        .on_conflict_do_nothing(index_elements=[User.email])
+        .returning(User.id)
+    )
+    with db.begin():
+        user_id = db.scalar(statement)
+        if user_id is None:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "code": "CONFLICT",
+                    "message": "An account with this email already exists.",
+                },
+            )
+
+    return {
+        "success": True,
+        "message": "Account created.",
+        "data": {
+            "id": user_id,
+            "name": request.name,
+            "email": request.email,
+            "role": request.role,
+            "approvalStatus": approval_status,
+        },
+    }
