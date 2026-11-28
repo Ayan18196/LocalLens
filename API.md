@@ -25,6 +25,7 @@ A missing or invalid token returns `401 Unauthorized`. A regular user who tries 
 
 | Method and path | Access | Input | Success | Possible errors |
 | --- | --- | --- | --- | --- |
+| `POST /api/v1/auth/register` | Public | JSON body with `name`, `email`, `password`, `role` | `201` | `400`, `409`, `503` |
 | `GET /api/v1/bookings` | Signed-in user or admin | Query: `page`, `perPage` | `200` | `400`, `401` |
 | `GET /api/v1/bookings/{id}` | Booking owner or admin | Path: `id` | `200` | `400`, `401`, `403`, `404` |
 | `POST /api/v1/bookings` | Signed-in user or admin | JSON body: `slotId` | `201` | `400`, `401` |
@@ -33,6 +34,37 @@ A missing or invalid token returns `401 Unauthorized`. A regular user who tries 
 | `GET /api/v1/greeting` | Public | No parameters | `200` with HTML | `405` for unsupported methods |
 
 Unsupported methods return `405` on booking paths too. Paths below use numeric booking IDs. Requests only use the inputs listed in the table.
+
+## Register an account
+
+`POST /api/v1/auth/register` accepts a name, email address, password of 15 to 128 characters, and a role of `customer` or `host`. Emails are stored in lowercase. Customers start approved and hosts start pending.
+
+```json
+{
+  "name": "Samira Karimova",
+  "email": "samira@example.com",
+  "password": "example-passphrase-2026",
+  "role": "host"
+}
+```
+
+The `201 Created` response contains the new account's public fields.
+
+```json
+{
+  "success": true,
+  "message": "Account created.",
+  "data": {
+    "id": 1,
+    "name": "Samira Karimova",
+    "email": "samira@example.com",
+    "role": "host",
+    "approvalStatus": "pending"
+  }
+}
+```
+
+Invalid input returns `400 VALIDATION_ERROR`. A registered email returns `409 CONFLICT`. A missing `DATABASE_URL` returns `503 DATABASE_UNAVAILABLE`.
 
 ## List bookings
 

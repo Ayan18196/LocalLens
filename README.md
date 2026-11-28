@@ -29,7 +29,19 @@ Keep the server running while you open these pages:
 
 ## Authentication
 
-There is no real login. Every booking request must send one of three mock tokens in the `Authorization` header:
+### Account registration
+
+`POST /api/v1/auth/register` creates a customer or host account in PostgreSQL. Set `DATABASE_URL` in a local `.env` using `.env.example` as a template. On a fresh local development database, create the `users` table from the existing model after installing the requirements:
+
+```powershell
+.\.venv\Scripts\python.exe -c "from models import User; from database import engine; User.__table__.create(engine, checkfirst=True)"
+```
+
+On macOS and Linux, use `.venv/bin/python` in the same command. See the [registration request and response](API.md#register-an-account) for an example.
+
+### Booking prototype
+
+Every booking request must send one of three mock tokens in the `Authorization` header:
 
 ```http
 Authorization: Bearer user-a-token
